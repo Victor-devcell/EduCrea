@@ -1,0 +1,118 @@
+import streamlit as st
+import google.generativeai as genai
+
+# Configurar la API de Gemini
+genai.configure(api_key="AIzaSyDyjZHp6FScisBscDbXAhs0VnzuDibscIY")
+
+# Configurar el modelo Gemini
+modelo = genai.GenerativeModel('gemini-1.5-flash')
+
+# Interfaz de Streamlit
+st.markdown(
+    """
+    <style>
+    .reportview-container {
+        background-color: #1E90FF; /* Color azul */
+    }
+    .sidebar .sidebar-content {
+        background-color: #1E90FF; /* Color azul para la barra lateral */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.title("Plataforma Educativa Inclusiva con IA")
+
+# Opciones de accesibilidad
+opciones_accesibilidad = st.multiselect(
+    "Selecciona las opciones de accesibilidad:",
+    ["Lector de pantalla", "Subtítulos automáticos", "Navegación por voz", "Teclado virtual"]
+)
+
+# Personalización del contenido
+tipo_discapacidad = st.selectbox(
+    "Selecciona el tipo de discapacidad:",
+    ["Visual", "Auditiva", "Motriz", "Cognitiva"]
+)
+
+nivel_educativo = st.selectbox(
+    "Selecciona el nivel educativo:",
+    ["Primaria", "Secundaria", "Bachillerato", "Universidad"]
+)
+
+# Subida de contenido
+contenido = st.text_area("Ingresa el contenido educativo:")
+
+if st.button("Generar contenido adaptado"):
+    if contenido:
+        prompt = f"""
+        Adapta el siguiente contenido educativo para un estudiante con discapacidad {tipo_discapacidad.lower()}
+        en nivel {nivel_educativo.lower()}. El contenido debe ser accesible y fácil de entender.
+       
+        Contenido original:
+        {contenido}
+       
+        Opciones de accesibilidad seleccionadas: {', '.join(opciones_accesibilidad)}
+        """
+       
+        # Generar respuesta con Gemini
+        try:
+            respuesta = modelo.generate_content(prompt)
+           
+            # Mostrar el contenido adaptado
+            st.subheader("Contenido Adaptado:")
+            if hasattr(respuesta, 'text'):
+                st.write(respuesta.text)
+            elif hasattr(respuesta, 'parts'):
+                for part in respuesta.parts:
+                    st.write(part.text)
+            else:
+                st.write(str(respuesta))
+       
+        except Exception as e:
+            st.error(f"Ocurrió un error al generar el contenido: {str(e)}")
+       
+        # Sugerencias para docentes
+        st.subheader("Sugerencias para docentes:")
+        sugerencias_prompt = f"Proporciona 3 sugerencias breves para que los docentes mejoren la enseñanza a estudiantes con discapacidad {tipo_discapacidad.lower()} en nivel {nivel_educativo.lower()}."
+        try:
+            sugerencias = modelo.generate_content(sugerencias_prompt)
+            if hasattr(sugerencias, 'text'):
+                st.write(sugerencias.text)
+            elif hasattr(sugerencias, 'parts'):
+                for part in sugerencias.parts:
+                    st.write(part.text)
+            else:
+                st.write(str(sugerencias))
+        except Exception as e:
+            st.error(f"Ocurrió un error al generar las sugerencias: {str(e)}")
+    else:
+        st.warning("Por favor, ingresa algún contenido educativo para adaptar.")
+
+# Chatbot
+st.subheader("Chatbot de Asistencia")
+usuario_input = st.text_input("Escribe tu pregunta o comentario:")
+if st.button("Enviar"):
+    if usuario_input:
+        respuesta_chatbot = modelo.generate_content(usuario_input)
+        st.write("Chatbot:", respuesta_chatbot.text if hasattr(respuesta_chatbot, 'text') else str(respuesta_chatbot))
+    else:
+        st.warning("Por favor, ingresa un mensaje para el chatbot.")
+
+# Información adicional
+st.sidebar.title("Sobre esta plataforma")
+st.sidebar.info(
+    "Esta plataforma utiliza inteligencia artificial para adaptar contenido educativo "
+    "a las necesidades de estudiantes con diversas discapacidades. Nuestro objetivo es "
+    "hacer la educación más accesible e inclusiva para todos."
+)
+
+
+def mostrar_mensaje_con_avatar(usuario, mensaje, avatar_url):
+    with st.chat_message(usuario, avatar=avatar_url):
+        st.write(mensaje)
+
+# Ejemplos de uso:
+mostrar_mensaje_con_avatar("user", "Hola!", "Sitemap Whiteboard in Green Purple Basic Style.png")
+mostrar_mensaje_con_avatar("bot", "Como te puedo ayudar!", "Sitemap Whiteboard in Green Purple Basic Style.png")

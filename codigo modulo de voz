@@ -1,0 +1,49 @@
+import streamlit as st
+import google.generativeai as genai
+import speech_recognition as sr  # Importar la biblioteca para reconocimiento de voz
+import pyaudio
+
+# Configurar la API de Gemini
+genai.configure(api_key="AIzaSyDyjZHp6FScisBscDbXAhs0VnzuDibscIY")
+
+# Configurar el modelo Gemini
+modelo = genai.GenerativeModel('gemini-1.5-flash')
+
+# Función para reconocimiento de voz
+def reconocer_voz():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.write("Por favor, hable ahora...")
+        audio = r.listen(source)
+        try:
+            texto = r.recognize_google(audio, language='es-ES')
+            st.success(f"Has dicho: {texto}")
+            return texto
+        except sr.UnknownValueError:
+            st.error("No se pudo entender el audio.")
+            return None
+        except sr.RequestError:
+            st.error("Error al conectar con el servicio de reconocimiento de voz.")
+            return None
+
+# Función para obtener respuesta
+def obtener_respuesta(prompt):
+    try:
+        # Cambia 'generate_response' por el método correcto que encuentres en la impresión anterior
+        respuesta = modelo.generate_content(prompt)  # Cambia esto según el método correcto
+    except AttributeError:
+        st.warning("El método 'generate_content' no está disponible. Verifica la documentación.")
+        return "Error en la generación de respuesta."
+    except Exception as e:
+        st.warning(f"Ocurrió un error inesperado: {e}")
+        return "Error en la generación de respuesta."
+    return respuesta.text  # Ajustado para obtener el texto de la respuesta
+
+# Botón para activar el reconocimiento de voz
+if st.button("Hablar"):
+    texto_reconocido = reconocer_voz()
+    if texto_reconocido:
+        respuesta = obtener_respuesta(texto_reconocido)  # Asegúrate de que esta línea esté después de la definición de la función
+        st.write(f"Respuesta: {respuesta}")
+
+
